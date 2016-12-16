@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
+using PK.InfiniteRunner.Debuging;
 
-namespace PK.InfinuteRunner.Game
+namespace PK.InfiniteRunner.Game
 {
     public enum TiltDirection
     {
@@ -9,39 +10,31 @@ namespace PK.InfinuteRunner.Game
         Right
     }
     public class PlayerInput : MonoBehaviour
-    {   
+    {
         //Minimal distance for swipes to be valid
         private float minSwipeDistanceY = 50f;
-        private float minSwipeDistanceX = 50f; 
-
+        private float minSwipeDistanceX = 50f;
+        private float degree = 60f;
         //Swipe Variables
         private Touch touch;
         private Vector2 touchStart;
         private Vector2 swipeDistance;
-
         //Tilt Variables
         private TiltDirection curTiltDirection;
-        private TiltDirection lasTiltDirection;
+        private TiltDirection lastTiltDirection;
         private float tiltDir;
         private float minTilting = 0.2f;
-
         //Debuging
-        private InputUIDebug uiDebug;
+        private DebugControl uiDebug;
 
-
-        
-
-        
-        
         void Start()
         {
-           uiDebug = InputUIDebug.Instance;
-            lasTiltDirection = TiltDirection.None;
+            uiDebug = DebugControl.Instance;
+            lastTiltDirection = TiltDirection.None;
         }
-
-        
         void Update()
-        { 
+        {
+#if !UNITY_EDITOR && (UNITY_IPHONE || UNITY_ANDROID || UNITY_BLACKBERRY || UNITY_WP8)
             tiltDir = Input.acceleration.x;
             if (tiltDir > minTilting)
             {
@@ -56,12 +49,11 @@ namespace PK.InfinuteRunner.Game
                 curTiltDirection = TiltDirection.None;
             }
             //For Debuging 
-            if (lasTiltDirection != curTiltDirection )
+            if (lastTiltDirection != curTiltDirection)
             {
-                lasTiltDirection = curTiltDirection;
-                ShowCurTiltDirection(); 
+                lastTiltDirection = curTiltDirection;
+                ShowCurTiltDirection();
             }
-
             //Only if there is one touch
             if (Input.touchCount == 1)
             {
@@ -69,7 +61,7 @@ namespace PK.InfinuteRunner.Game
                 touch = Input.GetTouch(0);
 
                 switch (touch.phase)
-                { 
+                {
                     case TouchPhase.Began:
                         //Get Starting Position
                         touchStart = touch.position;
@@ -79,7 +71,7 @@ namespace PK.InfinuteRunner.Game
                         //Get Ending Position
                         swipeDistance = touchStart - touch.position;
                         //Check if swipe is vertical
-                        if (Mathf.Abs(swipeDistance.y) > minSwipeDistanceY)
+                        if (Mathf.Abs(swipeDistance.y) > minSwipeDistanceY && Mathf.Abs(swipeDistance.y / swipeDistance.x) > Mathf.Tan(degree))
                         {
                             if (swipeDistance.y < 0)
                             {
@@ -95,7 +87,7 @@ namespace PK.InfinuteRunner.Game
                         {
                             if (swipeDistance.x < 0)
                             {
-                                 OnSwipeRight();
+                                OnSwipeRight();
                             }
                             else
                             {
@@ -105,15 +97,34 @@ namespace PK.InfinuteRunner.Game
                         //If it wasn't vertical or horizontal then it was a single tap
                         else
                         {
-                             OnSingleTap();
+                            OnSingleTap();
                         }
                         break;
                 }
+            }  
+#else
+            if (Input.GetKeyDown(KeyCode.UpArrow))
+            {
+                OnSwipeUp();
             }
+            if (Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                OnSwipeDown();
+            }
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                OnSwipeLeft();
+            }
+            if (Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                OnSwipeRight();
+            }
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                OnSingleTap();
+            }
+#endif
         }
-
-
-
         private void OnSwipeLeft()
         {
             uiDebug.ShowText("Swipe Left");
@@ -124,22 +135,20 @@ namespace PK.InfinuteRunner.Game
         }
         private void OnSwipeUp()
         {
-            uiDebug.ShowText("Swipe Up");
+            uiDebug.ShowText("Swipe Up", DebugType.Warning);
         }
         private void OnSwipeDown()
         {
-            uiDebug.ShowText("Swipe Down");
+            uiDebug.ShowText("Swipe Down", DebugType.Error);
         }
-
         private void OnSingleTap()
         {
             uiDebug.ShowText("Single Tap");
         }
         private void ShowCurTiltDirection()
         {
-             uiDebug.ShowTiltText(curTiltDirection.ToString());
+            uiDebug.ShowText(curTiltDirection.ToString(), DebugType.Warning);
         }
-
     }
 }
 

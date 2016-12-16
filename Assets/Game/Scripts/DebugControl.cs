@@ -98,19 +98,19 @@ namespace PK.InfiniteRunner.Debuging
                 case DebugType.Normal:
                     if (showNormalText)
                     {
-                        displayText.text += "<color=#008000ff>" + nText.TextToShow + "</color>" + "\n";
+                        displayText.text += "\n" + "<color=#008000ff>" + nText.TextToShow + "</color>" ;
                     }
                     break;
                 case DebugType.Warning:
                     if (showWarningText)
                     {
-                        displayText.text += "<color=#ffa500ff>" + nText.TextToShow + "</color>" + "\n";
+                        displayText.text += "\n" + "<color=#ffa500ff>" + nText.TextToShow + "</color>" ;
                     }
                     break;
                 case DebugType.Error:
                     if (showErrorText)
                     {
-                        displayText.text += "<color=#ff0000ff>" + nText.TextToShow + "</color>" + "\n";
+                        displayText.text += "\n" + "<color=#ff0000ff>" + nText.TextToShow + "</color>" ;
                     }
                     break;
             }
