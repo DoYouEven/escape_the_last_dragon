@@ -14,9 +14,16 @@ public class Singelton<T> : MonoBehaviour where T : MonoBehaviour
             {
                 instance = FindObjectOfType<T>() as T;
             }
+            if (instance == null)
+            {
+                GameObject instanceGameObject = new GameObject();
+                instanceGameObject.name = "Instance";
+                instance = instanceGameObject.AddComponent<T>();   
+            }
 
             return instance;
         }
     }
+   
 
 }

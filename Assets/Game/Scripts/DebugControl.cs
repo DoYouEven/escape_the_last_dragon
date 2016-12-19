@@ -12,29 +12,54 @@ namespace PK.InfiniteRunner.Debuging
         Error
     }
     public class DebugControl : Singelton<DebugControl>
-    {
-        [Header("Ui")]
-        [SerializeField]
-        private Text displayText;
-
-        [SerializeField]
-        private Image normalBotton;
-        [SerializeField]
-        private Image warningBotton;
-        [SerializeField]
-        private Image errorBotton;
-
-        [SerializeField]
-        private Color enableColor;
-        [SerializeField]
-        private Color disableColor;
-
+    {  
+        private GameObject uiPrefab;
+        private Text displayText;  
+        private Image normalButton;
+        private Image warningButton;
+        private Image errorButton;
+        private Button clearButton;
+        //Colors For Buttons
+        private Color32 enableColor = new Color32(4, 97, 182, 255);
+        private Color32 disableColor = new Color32(139, 139, 139, 255);
+        //Keeps track of all text
         private List<DebugText> textList = new List<DebugText>();
-
+        //To keep track of what to show
         private bool showNormalText = true;
         private bool showWarningText = true;
         private bool showErrorText = true;
 
+        void Awake()
+        {
+            //Spawn CanvasPrefab
+            uiPrefab = (GameObject)Instantiate(Resources.Load("UI/DebugCanvas"));   
+            //SetNormalButton and add the listener
+            normalButton = GameObject.Find("Normal").GetComponent<Image>();
+            if (normalButton != null)
+            {
+                normalButton.GetComponent<Button>().onClick.AddListener(ToggleShowNormals);
+            } 
+            //Set Warning button and add listener
+            warningButton = GameObject.Find("Warning").GetComponent<Image>();
+            if (warningButton != null)
+            {
+                warningButton.GetComponent<Button>().onClick.AddListener(ToggleShowWarnings);
+            } 
+            //Set errorButton and set listener
+            errorButton = GameObject.Find("Error").GetComponent<Image>();
+            if (errorButton != null)
+            {
+                errorButton.GetComponent<Button>().onClick.AddListener(ToggleShowErrors);
+            } 
+            //Set DisplayText
+            displayText = GameObject.Find("TextDisplay").GetComponent<Text>(); 
+            //Set Clear Button and set listener
+            clearButton = GameObject.Find("Clear").GetComponent<Button>();
+            if (clearButton != null)
+            {
+                clearButton.onClick.AddListener(Clear);
+            } 
+        } 
         //Recive Text To Display
         public void ShowText(string textToShow, DebugType debugType = DebugType.Normal)
         {
@@ -46,21 +71,21 @@ namespace PK.InfiniteRunner.Debuging
         public void ToggleShowNormals()
         {
             showNormalText = !showNormalText;
-            ChangeButtonColor(normalBotton, showNormalText);
+            ChangeButtonColor(normalButton, showNormalText);
             RefreshDisplayText();
         }
         //Show and hide warning debugs
         public void ToggleShowWarnings()
         {
             showWarningText = !showWarningText;
-            ChangeButtonColor(warningBotton, showWarningText);
+            ChangeButtonColor(warningButton, showWarningText);
             RefreshDisplayText();
         }
         //Show and hide error debugs
         public void ToggleShowErrors()
         {
             showErrorText = !showErrorText;
-            ChangeButtonColor(errorBotton, showErrorText);
+            ChangeButtonColor(errorButton, showErrorText);
             RefreshDisplayText();
         }
         //Change the color of the selected button
@@ -91,26 +116,26 @@ namespace PK.InfiniteRunner.Debuging
             }
         }
         //Add a debug if its enable and asign color to the text
-        private void DisplayTextOfType(DebugText nText)
+        private void DisplayTextOfType(DebugText debugText)
         {
-            switch (nText.DebugTextType)
+            switch (debugText.DebugTextType)
             {
                 case DebugType.Normal:
                     if (showNormalText)
                     {
-                        displayText.text += "\n" + "<color=#008000ff>" + nText.TextToShow + "</color>" ;
+                        displayText.text += "\n" + "<color=#008000ff>" + debugText.TextToShow + "</color>";
                     }
                     break;
                 case DebugType.Warning:
                     if (showWarningText)
                     {
-                        displayText.text += "\n" + "<color=#ffa500ff>" + nText.TextToShow + "</color>" ;
+                        displayText.text += "\n" + "<color=#ffa500ff>" + debugText.TextToShow + "</color>";
                     }
                     break;
                 case DebugType.Error:
                     if (showErrorText)
                     {
-                        displayText.text += "\n" + "<color=#ff0000ff>" + nText.TextToShow + "</color>" ;
+                        displayText.text += "\n" + "<color=#ff0000ff>" + debugText.TextToShow + "</color>";
                     }
                     break;
             }
