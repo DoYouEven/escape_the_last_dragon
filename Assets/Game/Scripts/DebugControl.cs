@@ -12,7 +12,7 @@ namespace PK.InfiniteRunner.Debuging
         Error
     }
     public class DebugControl : Singelton<DebugControl>
-    {  
+    {
         private GameObject uiPrefab;
         private Text displayText;  
         private Image normalButton;
@@ -32,7 +32,13 @@ namespace PK.InfiniteRunner.Debuging
         void Awake()
         {
             //Spawn CanvasPrefab
-            uiPrefab = (GameObject)Instantiate(Resources.Load("UI/DebugCanvas"));   
+            uiPrefab = (GameObject)Instantiate(Resources.Load("UI/DebugCanvas"));
+            if (uiPrefab == null)
+            {
+                Debug.LogError("Make sure that the ui prefab is on UI/DebugCanvas");
+                return;
+            }
+               
             //SetNormalButton and add the listener
             normalButton = GameObject.Find("Normal").GetComponent<Image>();
             if (normalButton != null)
