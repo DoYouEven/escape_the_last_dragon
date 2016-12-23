@@ -27,10 +27,13 @@ namespace PK.InfiniteRunner.Game
         //Debuging
         private DebugControl uiDebug;
 
+        private AvatarController avatarController;
+
         void Start()
         {
             uiDebug = DebugControl.Instance;
             lastTiltDirection = TiltDirection.None;
+            avatarController = AvatarController.Instance;
         }
         void Update()
         {
@@ -127,11 +130,13 @@ namespace PK.InfiniteRunner.Game
         }
         private void OnSwipeLeft()
         {
-            uiDebug.ShowText("Swipe Left");
+           // uiDebug.ShowText("Swipe Left");
+            avatarController.SwitchLane(Lanes.Left);
         }
         private void OnSwipeRight()
         {
-            uiDebug.ShowText("Swipe Right");
+            //uiDebug.ShowText("Swipe Right");
+            avatarController.SwitchLane(Lanes.Right);
         }
         private void OnSwipeUp()
         {
