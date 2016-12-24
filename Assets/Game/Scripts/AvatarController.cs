@@ -25,7 +25,7 @@ namespace PK.InfiniteRunner.Game
     {
         Left,
         Right
-    } 
+    }
 
     public class AvatarController : Singelton<AvatarController>
     {
@@ -43,6 +43,7 @@ namespace PK.InfiniteRunner.Game
         private Lanes curLane;
         private Lanes wantedLane;
 
+        public WorldDirection curDirection;
 
 
         private float laneDistance = 1.5f;
@@ -60,16 +61,45 @@ namespace PK.InfiniteRunner.Game
 
         public float CenterLanePosition;
 
-        private float leftLanePosition
+        private float leftLanePosition;
+
+        private float rightLanePosition;
+
+        private void SetLinePositions()
         {
-            get { return CenterLanePosition - laneDistance; }
+            switch (curDirection)
+            {
+                case WorldDirection.North:
+                    leftLanePosition = CenterLanePosition - laneDistance;
+                    rightLanePosition = CenterLanePosition + laneDistance;
+                    break;
+                case WorldDirection.South:
+                    leftLanePosition = CenterLanePosition + laneDistance;
+                    rightLanePosition = CenterLanePosition - laneDistance;
+                    break;
+                case WorldDirection.East:
+                    leftLanePosition = CenterLanePosition + laneDistance;
+                    rightLanePosition = CenterLanePosition - laneDistance;
+                    break;
+                case WorldDirection.West:
+                    leftLanePosition = CenterLanePosition - laneDistance;
+                    rightLanePosition = CenterLanePosition + laneDistance;
+                    break;
+            }
         }
 
-        private float rightLanePosition
+        public void SetCenterLanePosition(Vector3 pos)
         {
-            get { return CenterLanePosition + laneDistance; }
+            if (curDirection == WorldDirection.North || curDirection == WorldDirection.South)
+            {
+                CenterLanePosition = pos.x;
+            }
+            else
+            {
+                CenterLanePosition = pos.z;
+            }
+            SetLinePositions();
         }
-
         void Start()
         {
             myRigidbody = GetComponent<Rigidbody>();
@@ -77,11 +107,13 @@ namespace PK.InfiniteRunner.Game
             myAnimator = GetComponent<Animator>();
             curLane = Lanes.Center;
             wantedLane = Lanes.Center;
+            curDirection = WorldDirection.North;
 
 
             CenterLanePosition = myTransform.position.x;
+            SetLinePositions();
 
-           
+
             debugControl = DebugControl.Instance;
             direction = new Vector3(Mathf.Sin(curAngle), 0, Mathf.Cos(curAngle));
             myController = GetComponent<CharacterController>();
@@ -93,12 +125,14 @@ namespace PK.InfiniteRunner.Game
             {
                 return;
             }
-            
-            
+
+
             if (wantedLane != curLane)
             {
-                myController.SimpleMove(direction + (curLane < wantedLane ? myTransform.right : -myTransform.right) * Speed);
+
                 myController.transform.forward = direction;
+
+                myController.SimpleMove(direction + (curLane < wantedLane ? myTransform.right : -myTransform.right) * Speed);
                 if (IsOnWantedLine(wantedLane))
                 {
                     curLane = wantedLane;
@@ -113,9 +147,9 @@ namespace PK.InfiniteRunner.Game
 
         }
 
-        public void Turn(TurnDirection turnDirection)
+        public void Turn(TurnDirection turnDirection, Vector3 pos)
         {
-           
+
             switch (turnDirection)
             {
                 case TurnDirection.Left:
@@ -126,45 +160,178 @@ namespace PK.InfiniteRunner.Game
                     break;
             }
 
-            direction = new Vector3(Mathf.Round(Mathf.Sin(curAngle * Mathf.Deg2Rad)), 0, Mathf.Round(Mathf.Cos(curAngle * Mathf.Deg2Rad))); 
-         
+            direction = new Vector3(Mathf.Round(Mathf.Sin(curAngle * Mathf.Deg2Rad)), 0, Mathf.Round(Mathf.Cos(curAngle * Mathf.Deg2Rad)));
+            //East
+            if (direction.x == 1)
+            {
+                curDirection = WorldDirection.East;
+            }
+            //west
+            else if (direction.x == -1)
+            {
+                curDirection = WorldDirection.West;
+            }
+            //North
+            if (direction.z == 1)
+            {
+                curDirection = WorldDirection.North;
+            }
+            //South
+            else if (direction.z == -1)
+            {
+                curDirection = WorldDirection.South;
+            }
+            SetCenterLanePosition(pos);
+
         }
 
         private bool IsOnWantedLine(Lanes lanes)
         {
-
             switch (lanes)
             {
                 case Lanes.Left:
-
-                    myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, leftLanePosition, CenterLanePosition), myTransform.position.y, myTransform.position.z);
-
-                    if (Math.Abs(myTransform.position.x - leftLanePosition) < 0.1f)
+                    switch (curDirection)
                     {
-                        return true;
+                        case WorldDirection.North:
+                            myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, leftLanePosition, CenterLanePosition), myTransform.position.y, myTransform.position.z);
+
+                            if (Math.Abs(myTransform.position.x - leftLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+                            break;
+                        case WorldDirection.South:
+                            myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, CenterLanePosition, leftLanePosition), myTransform.position.y, myTransform.position.z);
+
+                            if (Math.Abs(myTransform.position.x - leftLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+                            break;
+                        case WorldDirection.East:
+                            myTransform.position = new Vector3(myTransform.position.x, myTransform.position.y, Mathf.Clamp(myTransform.position.z, CenterLanePosition, leftLanePosition));
+
+                            if (Math.Abs(myTransform.position.z - leftLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+                            break;
+                        case WorldDirection.West:
+                            myTransform.position = new Vector3(myTransform.position.x, myTransform.position.y, Mathf.Clamp(myTransform.position.z, leftLanePosition, CenterLanePosition));
+
+                            if (Math.Abs(myTransform.position.z - leftLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+                            break;
                     }
+                    
+                  
+
                     break;
                 case Lanes.Center:
-                    if (curLane == Lanes.Left)
+                    switch (curDirection)
                     {
-                        myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, leftLanePosition, CenterLanePosition), myTransform.position.y, myTransform.position.z);
-                    }
-                    else
-                    {
-                        myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, CenterLanePosition, rightLanePosition), myTransform.position.y, myTransform.position.z);
+                        case WorldDirection.North:
+                            if (curLane == Lanes.Left)
+                            {
+                                myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, leftLanePosition, CenterLanePosition), myTransform.position.y, myTransform.position.z);
+                            }
+                            else
+                            {
+                                myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, CenterLanePosition, rightLanePosition), myTransform.position.y, myTransform.position.z);
+                            }
+
+                            if (Math.Abs(myTransform.position.x - CenterLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+                            break;
+                        case WorldDirection.South:
+                            if (curLane == Lanes.Left)
+                            {
+                                myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, CenterLanePosition, leftLanePosition), myTransform.position.y, myTransform.position.z);
+                            }
+                            else
+                            {
+                                myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, rightLanePosition, CenterLanePosition), myTransform.position.y, myTransform.position.z);
+                            }
+
+                            if (Math.Abs(myTransform.position.x - CenterLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+                            break;
+                        case WorldDirection.East:
+                            if (curLane == Lanes.Left)
+                            {
+                                myTransform.position = new Vector3(myTransform.position.x, myTransform.position.y, Mathf.Clamp(myTransform.position.z, CenterLanePosition, leftLanePosition));
+                            }
+                            else
+                            {
+                                myTransform.position = new Vector3(myTransform.position.x, myTransform.position.y, Mathf.Clamp(myTransform.position.z, rightLanePosition, CenterLanePosition));
+                            }
+
+                            if (Math.Abs(myTransform.position.z - CenterLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+
+                            break;
+                        case WorldDirection.West:
+                            if (curLane == Lanes.Left)
+                            {
+                                myTransform.position = new Vector3(myTransform.position.x, myTransform.position.y, Mathf.Clamp(myTransform.position.z, leftLanePosition, CenterLanePosition));
+                            }
+                            else
+                            {
+                                myTransform.position = new Vector3(myTransform.position.x, myTransform.position.y, Mathf.Clamp(myTransform.position.z, CenterLanePosition, rightLanePosition));
+                            }
+
+                            if (Math.Abs(myTransform.position.z - CenterLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+                            break;
                     }
 
-                    if (myTransform.position.x == CenterLanePosition)
-                    {
-                        return true;
-                    }
+
                     break;
                 case Lanes.Right:
-                    myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, CenterLanePosition, rightLanePosition), myTransform.position.y, myTransform.position.z);
-                    if (myTransform.position.x == rightLanePosition)
+
+                    switch (curDirection)
                     {
-                        return true;
+                        case WorldDirection.North:
+                            myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, CenterLanePosition, rightLanePosition), myTransform.position.y, myTransform.position.z);
+                            if (Math.Abs(myTransform.position.x - rightLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+                            break;
+                        case WorldDirection.South:
+                            myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x,  rightLanePosition, CenterLanePosition), myTransform.position.y, myTransform.position.z);
+                            if (Math.Abs(myTransform.position.x - rightLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+                            break;
+                        case WorldDirection.East:
+                            myTransform.position = new Vector3(myTransform.position.x, myTransform.position.y, Mathf.Clamp(myTransform.position.z, rightLanePosition, CenterLanePosition));
+                            if (Math.Abs(myTransform.position.z - rightLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+                            break;
+                        case WorldDirection.West:
+                            myTransform.position = new Vector3(myTransform.position.x, myTransform.position.y, Mathf.Clamp(myTransform.position.z, CenterLanePosition, rightLanePosition));
+                            if (Math.Abs(myTransform.position.z - rightLanePosition) < 0.1f)
+                            {
+                                return true;
+                            }
+                            break;
                     }
+
+
                     break;
             }
             return false;
@@ -216,14 +383,14 @@ namespace PK.InfiniteRunner.Game
                 }
                 PlayMoveAnimation(canMove);
             }
-            if (Input.GetMouseButtonDown(1))
-            {
-                Turn(TurnDirection.Left);
-            }
-            if (Input.GetMouseButtonDown(2))
-            {
-                Turn(TurnDirection.Right);
-            }
+            //if (Input.GetMouseButtonDown(1))
+            //{
+            //    Turn(TurnDirection.Left);
+            //}
+            //if (Input.GetMouseButtonDown(2))
+            //{
+            //    Turn(TurnDirection.Right);
+            //}
         }
 
 

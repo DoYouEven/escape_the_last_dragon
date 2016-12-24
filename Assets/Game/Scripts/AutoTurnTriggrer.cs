@@ -34,8 +34,8 @@ namespace PK.InfiniteRunner.Game
         private void OnTriggerEnter(Collider other)
         {
             if (other.CompareTag(playerTag))
-            {
-                controller.Turn(Direction);
+            { 
+                controller.Turn(Direction,transform.position);
             }
         }
 
