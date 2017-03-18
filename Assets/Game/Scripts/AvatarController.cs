@@ -12,7 +12,6 @@ namespace PK.InfiniteRunner.Game
         Center,
         Right
     }
-
     public enum WorldDirection
     {
         North,
@@ -20,7 +19,6 @@ namespace PK.InfiniteRunner.Game
         East,
         West
     }
-
     public enum TurnDirection
     {
         Left,
@@ -37,12 +35,13 @@ namespace PK.InfiniteRunner.Game
         private Transform myTransform;
         private Animator myAnimator;
         private CharacterController myController;
+        private PlayerInput myPlayerInput;
 
         private bool canMove;
 
         private Lanes curLane;
         private Lanes wantedLane;
-
+        public WorldDirection lastDirection;
         public WorldDirection curDirection;
 
 
@@ -57,14 +56,12 @@ namespace PK.InfiniteRunner.Game
 
         private Vector3 direction;
         private float curAngle;
-        private float rotationSpeed = 10f;
-
-        public float CenterLanePosition;
-
-        private float leftLanePosition;
-
+        //private float rotationSpeed = 10f;   
+        public float CenterLanePosition; 
+        private float leftLanePosition;  
         private float rightLanePosition;
 
+        private Vector3 curTurningPos;
         private void SetLinePositions()
         {
             switch (curDirection)
@@ -88,6 +85,147 @@ namespace PK.InfiniteRunner.Game
             }
         }
 
+
+        protected void Awake()
+        {
+            myRigidbody = GetComponent<Rigidbody>();
+            myTransform = transform;
+            myAnimator = GetComponent<Animator>();
+            curLane = Lanes.Center;
+            wantedLane = Lanes.Center;
+            curDirection = WorldDirection.North;
+            CenterLanePosition = myTransform.position.x;
+            SetLinePositions();
+            debugControl = DebugControl.Instance;
+            direction = new Vector3(Mathf.Sin(curAngle), 0, Mathf.Cos(curAngle));
+            myController = GetComponent<CharacterController>();
+            myPlayerInput = GetComponent<PlayerInput>();
+        }
+
+        protected void OnEnable()
+        {
+            myPlayerInput.OnSwipeRightDelegate += OnSwipeRight;
+            myPlayerInput.OnSwipeLeftDelegate += OnSwipeLeft;
+        }
+
+        protected void OnDisable()
+        {
+            myPlayerInput.OnSwipeRightDelegate -= OnSwipeRight;
+            myPlayerInput.OnSwipeLeftDelegate -= OnSwipeLeft;
+        }
+
+        private void OnSwipeRight()
+        {
+            if (canTurn(false))
+            {
+                Turn(TurnDirection.Right, curTurningPos);
+                debugControl.ShowText("Can Turn Right");
+                return;
+            }
+            SwitchLane(Lanes.Right);
+        }
+        private void OnSwipeLeft()
+        {
+            if (canTurn())
+            {
+                Turn(TurnDirection.Left, curTurningPos);
+                debugControl.ShowText("Can Turn Left");
+                
+                return;
+            }
+            SwitchLane(Lanes.Left);
+        }
+
+        private bool canTurn(bool left = true)
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(myTransform.position, Vector3.down, out hit))
+            {
+                var turnText = hit.transform.GetComponent<TurningTest>();
+                if (turnText != null)
+                {
+                    curTurningPos = hit.transform.position;
+                    return left ? turnText.CanTurnLeft : turnText.CanTurnRight;
+                }
+            }
+            return false;
+        }
+
+
+        protected void FixedUpdate()
+        {
+            if (!canMove)
+            {
+                return;
+            }
+            if (wantedLane != curLane)
+            {
+                myController.transform.forward = direction;
+                myController.SimpleMove(direction + (curLane < wantedLane ? myTransform.right : -myTransform.right) * Speed);
+                if (!IsOnWantedLine(wantedLane)) return;
+                curLane = wantedLane;
+                debugControl.ShowText(curLane.ToString());
+            }
+            else
+            {
+                myController.transform.forward = direction;
+                myController.SimpleMove(direction * Speed);
+            }
+        }
+
+        public void Turn(TurnDirection turnDirection, Vector3 pos)
+        {
+            lastDirection = curDirection;
+
+            switch (turnDirection)
+            {
+                case TurnDirection.Left:
+                    curAngle -= 90;
+                    break;
+                case TurnDirection.Right:
+                    curAngle += 90;
+                    break;
+            }
+            direction = new Vector3(Mathf.Round(Mathf.Sin(curAngle * Mathf.Deg2Rad)), 0, Mathf.Round(Mathf.Cos(curAngle * Mathf.Deg2Rad)));
+            //East
+            if (direction.x > 0)
+            {
+                curDirection = WorldDirection.East;
+            }
+            //west
+            else if (direction.x < 0)
+            {
+                curDirection = WorldDirection.West;
+            }
+            //North
+            if (direction.z > 0)
+            {
+                curDirection = WorldDirection.North;
+            }
+            //South
+            else if (direction.z < 0)
+            {
+                curDirection = WorldDirection.South;
+            }
+            SetCenterLanePosition(pos);
+            if (turnDirection == TurnDirection.Left)
+            {
+                ReturnToMyLaneL();
+            }
+            else
+            {
+                ReturnToMyLaneR();
+            }
+        }
+
+        private void ReturnToMyLaneL()
+        {
+            curLane = wantedLane == Lanes.Left ? Lanes.Center : Lanes.Left;
+        }
+        private void ReturnToMyLaneR()
+        {
+            curLane = wantedLane == Lanes.Right ? Lanes.Center : Lanes.Right;
+        }
         public void SetCenterLanePosition(Vector3 pos)
         {
             if (curDirection == WorldDirection.North || curDirection == WorldDirection.South)
@@ -100,90 +238,6 @@ namespace PK.InfiniteRunner.Game
             }
             SetLinePositions();
         }
-        void Start()
-        {
-            myRigidbody = GetComponent<Rigidbody>();
-            myTransform = transform;
-            myAnimator = GetComponent<Animator>();
-            curLane = Lanes.Center;
-            wantedLane = Lanes.Center;
-            curDirection = WorldDirection.North;
-
-
-            CenterLanePosition = myTransform.position.x;
-            SetLinePositions();
-
-
-            debugControl = DebugControl.Instance;
-            direction = new Vector3(Mathf.Sin(curAngle), 0, Mathf.Cos(curAngle));
-            myController = GetComponent<CharacterController>();
-        }
-
-        private void FixedUpdate()
-        {
-            if (!canMove)
-            {
-                return;
-            }
-
-
-            if (wantedLane != curLane)
-            {
-
-                myController.transform.forward = direction;
-
-                myController.SimpleMove(direction + (curLane < wantedLane ? myTransform.right : -myTransform.right) * Speed);
-                if (IsOnWantedLine(wantedLane))
-                {
-                    curLane = wantedLane;
-                    debugControl.ShowText(curLane.ToString());
-                }
-            }
-            else
-            {
-                myController.transform.forward = direction;
-                myController.SimpleMove(direction * Speed);
-            }
-
-        }
-
-        public void Turn(TurnDirection turnDirection, Vector3 pos)
-        {
-
-            switch (turnDirection)
-            {
-                case TurnDirection.Left:
-                    curAngle -= 90;
-                    break;
-                case TurnDirection.Right:
-                    curAngle += 90;
-                    break;
-            }
-
-            direction = new Vector3(Mathf.Round(Mathf.Sin(curAngle * Mathf.Deg2Rad)), 0, Mathf.Round(Mathf.Cos(curAngle * Mathf.Deg2Rad)));
-            //East
-            if (direction.x == 1)
-            {
-                curDirection = WorldDirection.East;
-            }
-            //west
-            else if (direction.x == -1)
-            {
-                curDirection = WorldDirection.West;
-            }
-            //North
-            if (direction.z == 1)
-            {
-                curDirection = WorldDirection.North;
-            }
-            //South
-            else if (direction.z == -1)
-            {
-                curDirection = WorldDirection.South;
-            }
-            SetCenterLanePosition(pos);
-
-        }
 
         private bool IsOnWantedLine(Lanes lanes)
         {
@@ -194,7 +248,6 @@ namespace PK.InfiniteRunner.Game
                     {
                         case WorldDirection.North:
                             myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, leftLanePosition, CenterLanePosition), myTransform.position.y, myTransform.position.z);
-
                             if (Math.Abs(myTransform.position.x - leftLanePosition) < 0.1f)
                             {
                                 return true;
@@ -225,9 +278,6 @@ namespace PK.InfiniteRunner.Game
                             }
                             break;
                     }
-                    
-                  
-
                     break;
                 case Lanes.Center:
                     switch (curDirection)
@@ -294,8 +344,6 @@ namespace PK.InfiniteRunner.Game
                             }
                             break;
                     }
-
-
                     break;
                 case Lanes.Right:
 
@@ -309,7 +357,7 @@ namespace PK.InfiniteRunner.Game
                             }
                             break;
                         case WorldDirection.South:
-                            myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x,  rightLanePosition, CenterLanePosition), myTransform.position.y, myTransform.position.z);
+                            myTransform.position = new Vector3(Mathf.Clamp(myTransform.position.x, rightLanePosition, CenterLanePosition), myTransform.position.y, myTransform.position.z);
                             if (Math.Abs(myTransform.position.x - rightLanePosition) < 0.1f)
                             {
                                 return true;
@@ -330,12 +378,9 @@ namespace PK.InfiniteRunner.Game
                             }
                             break;
                     }
-
-
                     break;
             }
             return false;
-
         }
         public void SwitchLane(Lanes lanes)
         {
@@ -370,9 +415,7 @@ namespace PK.InfiniteRunner.Game
                     break;
             }
         }
-
-
-        void Update()
+        protected void Update()
         {
             if (Input.GetMouseButtonDown(0))
             {
@@ -392,17 +435,10 @@ namespace PK.InfiniteRunner.Game
             //    Turn(TurnDirection.Right);
             //}
         }
-
-
         private void PlayMoveAnimation(bool play)
         {
             myAnimator.SetBool("Move", play);
         }
-
-
-
-
-
     }
 }
 

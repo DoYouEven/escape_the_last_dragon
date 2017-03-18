@@ -724,10 +724,10 @@ public class UICamera : MonoBehaviour
 
 		if (Application.platform == RuntimePlatform.Android ||
 			Application.platform == RuntimePlatform.IPhonePlayer
-#if !UNITY_3_5 && !UNITY_4_0 && !UNITY_4_1
-			|| Application.platform == RuntimePlatform.WP8Player
+//#if !UNITY_3_5 && !UNITY_4_0 && !UNITY_4_1
+//			|| Application.platform == RuntimePlatform.WP8Player
 		
-#endif
+//#endif
 			)
 		{
 			useMouse = false;
@@ -739,14 +739,14 @@ public class UICamera : MonoBehaviour
 				useController = false;
 			}
 		}
-		else if (Application.platform == RuntimePlatform.PS3 ||
-				 Application.platform == RuntimePlatform.XBOX360)
-		{
-			useMouse = false;
-			useTouch = false;
-			useKeyboard = false;
-			useController = true;
-		}
+		//else if (Application.platform == RuntimePlatform.PS3 ||
+		//		 Application.platform == RuntimePlatform.XBOX360)
+		//{
+		//	useMouse = false;
+		//	useTouch = false;
+		//	useKeyboard = false;
+		//	useController = true;
+		//}
 		else if (Application.platform == RuntimePlatform.WindowsEditor ||
 				 Application.platform == RuntimePlatform.OSXEditor)
 		{
