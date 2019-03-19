@@ -9,11 +9,14 @@ namespace PK.InfiniteRunner.Game
         Left,
         Right
     }
+
+    public delegate void OnInputDelegate();
+
     public class PlayerInput : MonoBehaviour
     {
         //Minimal distance for swipes to be valid
-        private float minSwipeDistanceY = 50f;
-        private float minSwipeDistanceX = 50f;
+        //private float minSwipeDistanceY = 50f;
+        //private float minSwipeDistanceX = 50f;
         private float degree = 60f;
         //Swipe Variables
         private Touch touch;
@@ -25,14 +28,20 @@ namespace PK.InfiniteRunner.Game
         private float tiltDir;
         private float minTilting = 0.2f;
         //Debuging
-        private DebugControl uiDebug;
+        private DebugControl uiDebug;  
 
-        void Start()
+        //Delegates
+        public OnInputDelegate OnSwipeLeftDelegate;
+        public OnInputDelegate OnSwipeRightDelegate;
+        public OnInputDelegate OnSwipeUpDelegate;
+        public OnInputDelegate OnSwipeDownDelegate;
+        public OnInputDelegate OnSigleTapDelegate;
+        protected void Start()
         {
             uiDebug = DebugControl.Instance;
             lastTiltDirection = TiltDirection.None;
         }
-        void Update()
+        protected void Update()
         {
 #if !UNITY_EDITOR && (UNITY_IPHONE || UNITY_ANDROID || UNITY_BLACKBERRY || UNITY_WP8)
             tiltDir = Input.acceleration.x;
@@ -124,25 +133,46 @@ namespace PK.InfiniteRunner.Game
                 OnSingleTap();
             }
 #endif
-        }
+        }    
+      
         private void OnSwipeLeft()
         {
-            uiDebug.ShowText("Swipe Left");
+           // uiDebug.ShowText("Swipe Left"); 
+            if (OnSwipeLeftDelegate != null)
+            {
+                OnSwipeLeftDelegate();
+            }
         }
         private void OnSwipeRight()
         {
-            uiDebug.ShowText("Swipe Right");
+            //uiDebug.ShowText("Swipe Right");
+            if (OnSwipeRightDelegate != null)
+            {
+                OnSwipeRightDelegate();
+            }       
         }
         private void OnSwipeUp()
         {
+            if (OnSwipeUpDelegate != null)
+            {
+                OnSwipeUpDelegate();
+            }
             uiDebug.ShowText("Swipe Up", DebugType.Warning);
         }
         private void OnSwipeDown()
         {
+            if (OnSwipeDownDelegate != null)
+            {
+                OnSwipeDownDelegate();
+            }
             uiDebug.ShowText("Swipe Down", DebugType.Error);
         }
         private void OnSingleTap()
         {
+            if (OnSigleTapDelegate != null)
+            {
+                OnSigleTapDelegate();
+            }
             uiDebug.ShowText("Single Tap");
         }
         private void ShowCurTiltDirection()

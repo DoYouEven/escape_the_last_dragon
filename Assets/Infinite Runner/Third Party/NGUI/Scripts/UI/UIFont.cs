@@ -645,7 +645,7 @@ public class UIFont : MonoBehaviour
 			{
 				mDynamicFont.RequestCharactersInTexture("j", mDynamicFontSize, mDynamicFontStyle);
 				mDynamicFont.GetCharacterInfo('j', out mTemp, mDynamicFontSize, mDynamicFontStyle);
-				mDynamicFontOffset = (mDynamicFontSize + mTemp.vert.yMax);
+				mDynamicFontOffset = (mDynamicFontSize + mTemp.maxY /*mTemp.vert.yMax*/);
 				mDynamicFont.RequestCharactersInTexture(text, mDynamicFontSize, mDynamicFontStyle);
 			}
 		}
@@ -727,7 +727,7 @@ public class UIFont : MonoBehaviour
 				else
 				{
 					if (mDynamicFont.GetCharacterInfo(c, out mChar, mDynamicFontSize, mDynamicFontStyle))
-						x += (int)(mSpacingX + mChar.width);
+						x += (int)(mSpacingX + mChar.advance /*mChar.width*/);
 				}
 #endif
 			}
@@ -810,7 +810,7 @@ public class UIFont : MonoBehaviour
 			else
 			{
 				if (mDynamicFont.GetCharacterInfo(currentCharacter, out mChar, mDynamicFontSize, mDynamicFontStyle))
-					glyphWidth += (int)mChar.width;
+					glyphWidth += (int)mChar.advance/*mChar.width*/;
 			}
 #endif
 			// Remaining width after this glyph gets printed
@@ -958,7 +958,7 @@ public class UIFont : MonoBehaviour
 			else
 			{
 				if (mDynamicFont.GetCharacterInfo(ch, out mChar, mDynamicFontSize, mDynamicFontStyle))
-					glyphWidth += Mathf.RoundToInt(mChar.width);
+					glyphWidth += Mathf.RoundToInt(mChar.advance/*mChar.width*/);
 			}
 #endif
 			// Remaining width after this glyph gets printed
@@ -1282,8 +1282,8 @@ public class UIFont : MonoBehaviour
 					if (!mDynamicFont.GetCharacterInfo(c, out mChar, mDynamicFontSize, mDynamicFontStyle))
 						continue;
 
-					v0.x =  invSize.x * (x + mChar.vert.xMin);
-					v0.y = -invSize.y * (y - mChar.vert.yMax + mDynamicFontOffset);
+					v0.x =  invSize.x * (x + mChar.minX/*.vert.xMin*/);
+					v0.y = -invSize.y * (y - mChar.maxY/*.vert.yMax*/ + mDynamicFontOffset);
 					
 					v1.x = v0.x + invSize.x * mChar.vert.width;
 					v1.y = v0.y - invSize.y * mChar.vert.height;
@@ -1293,7 +1293,7 @@ public class UIFont : MonoBehaviour
 					u1.x = mChar.uv.xMax;
 					u1.y = mChar.uv.yMax;
 
-					x += mSpacingX + (int)mChar.width;
+					x += mSpacingX + (int)mChar.advance/*.width*/;
 
 					for (int b = 0; b < 4; ++b) cols.Add(color);
 
